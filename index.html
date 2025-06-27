@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Sites</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos CSS -->
+    <style>
+        :root {
+            --primary-color: #F9A826; /* Laranja da logo */
+            --secondary-color: #000000; /* Preto */
+            --background-color: #121212;
+            --card-color: #1E1E1E;
+            --text-color: #FFFFFF;
+            --text-muted: #AAAAAA;
+            --error-color: #ff6b6b;
+            --success-color: #4CAF50;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s;
+        }
+
+        /* --- Estrutura Principal --- */
+        header {
+            background-color: var(--secondary-color);
+            padding: 15px 0;
+            border-bottom: 2px solid var(--primary-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo-header {
+            height: 50px;
+        }
+        
+        #login-trigger-area {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            z-index: 101; /* Fica acima de outros elementos do header */
+            /* border: 1px dashed white; */ /* Remova o comentário para visualizar a área */
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            font-weight: bold;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn:disabled { background-color: #555; cursor: not-allowed; }
+
+        .btn-logout {
+            width: auto;
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        .btn-logout:hover { background-color: var(--primary-color); color: var(--secondary-color); }
+        
+        main.container {
+            padding-top: 40px;
+            padding-bottom: 40px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .main-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .main-header h1 { color: var(--primary-color); margin: 0; }
+        #addSiteBtn { width: auto; }
+
+        /* Grid de Cards */
+        #sitesGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #333;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); border-color: var(--primary-color); }
+        .card-link { text-decoration: none; color: inherit; display: flex; flex-direction: column; flex-grow: 1; cursor: pointer; }
+        .card-image { height: 180px; background-color: #333; background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
+        .card-image .placeholder-icon { font-size: 50px; color: var(--text-muted); }
+        .card-content { padding: 20px; flex-grow: 1; }
+        .card-content h3 { margin: 0 0 10px 0; color: var(--primary-color); }
+        .card-content p { margin: 0; color: var(--text-muted); font-size: 14px; word-break: break-all; }
+        .card-actions { padding: 0 20px 20px 20px; display: flex; gap: 10px; }
+        .action-btn { padding: 8px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; font-weight: bold; flex-grow: 1; transition: filter 0.2s; }
+        .action-btn:hover { filter: brightness(1.2); }
+        .edit-btn { background-color: #4a90e2; color: white; }
+        .delete-btn { background-color: #e24a4a; color: white; }
+        
+        /* Visibilidade de Controles de Admin */
+        .admin-only { display: none !important; }
+        body.is-admin .admin-only { display: flex !important; }
+
+        /* Indicador de Carregamento */
+        #loadingIndicator { text-align: center; padding: 50px; font-size: 1.2rem; color: var(--text-muted); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-left-color: var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        #loginSpinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+        .btn:disabled #loginSpinner { display: block; }
+        .btn:disabled span { display: none; }
+
+        /* Modals (Login e Edição de Site) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            align-items: center; justify-content: center;
+        }
+        .modal.visible { display: flex; }
+        .modal-content { background-color: var(--card-color); padding: 30px; border: 1px solid #444; border-radius: 8px; width: 90%; max-width: 500px; position: relative; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .close-button { color: var(--text-muted); position: absolute; top: 15px; right: 25px; font-size: 32px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
+        .close-button:hover { color: var(--text-color); }
+        .modal-content h2 { color: var(--primary-color); margin-top: 0; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 4px; border: 1px solid #444; background-color: #2a2a2a; color: var(--text-color); box-sizing: border-box; font-size: 16px; }
+        .input-group input:focus { outline: none; border-color: var(--primary-color); }
+        .error-message { color: var(--error-color); margin-top: 15px; font-size: 14px; height: 16px; text-align: center; }
+
+        /* Notificação Toast */
+        .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 6px; color: white; z-index: 2000; transition: bottom 0.5s ease; }
+        .toast.show { bottom: 20px; }
+        .toast.success { background-color: var(--success-color); }
+        .toast.error { background-color: var(--error-color); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <img src="https://i.imgur.com/EDw5HWL.png" alt="Logo Projetos Industriais" class="logo-header">
+            <div id="login-trigger-area" title="Acesso do Administrador"></div>
+            <button id="logoutButton" class="btn btn-logout admin-only">Sair</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="main-header">
+            <h1>Meus Sites</h1>
+            <button id="addSiteBtn" class="btn admin-only">Adicionar Novo Site</button>
+        </div>
+        <div id="sitesGrid">
+             <div id="loadingIndicator">
+                 <div class="spinner"></div>
+                 <p>Carregando sites...</p>
+             </div>
+        </div>
+    </main>
+
+    <!-- Modal para Login -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Acesso Restrito</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" id="loginButton" class="btn">
+                    <span>Entrar</span>
+                    <div id="loginSpinner"></div>
+                </button>
+                <p id="loginError" class="error-message"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Site -->
+    <div id="siteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modalTitle">Adicionar Novo Site</h2>
+            <form id="siteForm">
+                <input type="hidden" id="siteId">
+                <div class="input-group"><label for="siteTitle">Título do Site</label><input type="text" id="siteTitle" required></div>
+                <div class="input-group"><label for="siteUrl">URL do Site</label><input type="url" id="siteUrl" placeholder="https://exemplo.com" required></div>
+                <div class="input-group"><label for="siteImageUrl">URL da Imagem (Opcional)</label><input type="url" id="siteImageUrl" placeholder="https://link.com/imagem.png"></div>
+                <button type="submit" class="btn">Salvar</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Notificação Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- SDKs do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // #############################################################################
+            // ##  ATENÇÃO: CORREÇÃO NECESSÁRIA NO FIREBASE                              ##
+            // ##                                                                         ##
+            // ## O erro "Missing or insufficient permissions" acontece porque as        ##
+            // ## regras de segurança do Firestore não permitem a leitura pública.        ##
+            // ##                                                                         ##
+            // ## Para corrigir, vá para o seu painel do Firebase -> Firestore Database   ##
+            // ## -> Aba "Rules" e substitua as regras existentes por estas:              ##
+            // ##                                                                         ##
+            // ## rules_version = '2';                                                    ##
+            // ## service cloud.firestore {                                               ##
+            // ##   match /databases/{database}/documents {                               ##
+            // ##     match /sites/{siteId} {                                             ##
+            // ##       // Qualquer pessoa pode ler os sites.                             ##
+            // ##       allow read: if true;                                              ##
+            // ##       // Apenas usuários autenticados podem escrever.                   ##
+            // ##       allow write: if request.auth != null;                             ##
+            // ##     }                                                                   ##
+            // ##   }                                                                     ##
+            // ## }                                                                       ##
+            // ##                                                                         ##
+            // #############################################################################
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyBNphpVQo5JtUWJUTXPSFKmuJiLsUruTXM",
+                authDomain: "gerenciadordesites-73c9e.firebaseapp.com",
+                projectId: "gerenciadordesites-73c9e",
+                storageBucket: "gerenciadordesites-73c9e.firebasestorage.app",
+                messagingSenderId: "671306026197",
+                appId: "1:671306026197:web:23e500affec67771e6a65c",
+                measurementId: "G-76EB8F8TZH"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            const sitesCollection = db.collection('sites');
+            
+            // --- Lógica de Autenticação e Visibilidade ---
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    document.body.classList.add('is-admin');
+                    closeLoginModal();
+                } else {
+                    document.body.classList.remove('is-admin');
+                }
+            });
+
+            // --- Lógica do Dashboard (Sempre ativa) ---
+            const sitesGrid = document.getElementById('sitesGrid');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            sitesCollection.orderBy('title').onSnapshot(snapshot => {
+                loadingIndicator.style.display = 'none';
+                if (snapshot.empty) {
+                    sitesGrid.innerHTML = '<p>Nenhum site cadastrado ainda.</p>';
+                    return;
+                }
+                
+                sitesGrid.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const site = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.id = doc.id;
+                    
+                    card.innerHTML = `
+                        <a href="${site.url}" target="_blank" rel="noopener noreferrer" class="card-link">
+                            <div class="card-image" style="background-image: url('${site.imageUrl || ''}')">
+                                ${!site.imageUrl ? '<span class="placeholder-icon">🌐</span>' : ''}
+                            </div>
+                            <div class="card-content">
+                                <h3>${site.title}</h3>
+                                <p>${site.url}</p>
+                            </div>
+                        </a>
+                        <div class="card-actions admin-only">
+                            <button class="action-btn edit-btn">Editar</button>
+                            <button class="action-btn delete-btn">Excluir</button>
+                        </div>
+                    `;
+                    sitesGrid.appendChild(card);
+                });
+            }, err => {
+                console.error("Erro ao carregar sites: ", err);
+                sitesGrid.innerHTML = '<p>Ocorreu um erro ao carregar os sites. Verifique as regras de segurança do Firestore.</p>';
+            });
+
+            // --- Gerenciamento de Modals ---
+            const loginModal = document.getElementById('loginModal');
+            const siteModal = document.getElementById('siteModal');
+
+            const openLoginModal = () => loginModal.classList.add('visible');
+            const closeLoginModal = () => loginModal.classList.remove('visible');
+            const openSiteModal = (title, data = {}) => {
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('siteForm').reset();
+                document.getElementById('siteId').value = data.id || '';
+                if (data.id) {
+                    document.getElementById('siteTitle').value = data.title || '';
+                    document.getElementById('siteUrl').value = data.url || '';
+                    document.getElementById('siteImageUrl').value = data.imageUrl || '';
+                }
+                siteModal.classList.add('visible');
+            };
+            const closeSiteModal = () => siteModal.classList.remove('visible');
+
+            // Eventos para abrir/fechar modals
+            document.getElementById('login-trigger-area').addEventListener('click', openLoginModal);
+            document.getElementById('addSiteBtn').addEventListener('click', () => openSiteModal('Adicionar Novo Site'));
+
+            loginModal.querySelector('.close-button').addEventListener('click', closeLoginModal);
+            siteModal.querySelector('.close-button').addEventListener('click', closeSiteModal);
+            window.addEventListener('click', (e) => {
+                if (e.target === loginModal) closeLoginModal();
+                if (e.target === siteModal) closeSiteModal();
+            });
+
+            // --- Lógica de Formulários ---
+            
+            // Login
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const loginError = document.getElementById('loginError');
+                const loginButton = document.getElementById('loginButton');
+                
+                loginButton.disabled = true;
+                loginError.textContent = '';
+
+                auth.signInWithEmailAndPassword(email, password)
+                    .catch(error => {
+                        console.error("Erro de login:", error);
+                        loginError.textContent = 'E-mail ou senha inválidos.';
+                    })
+                    .finally(() => { loginButton.disabled = false; });
+            });
+
+            // Logout
+            document.getElementById('logoutButton').addEventListener('click', () => auth.signOut());
+
+            // Adicionar/Editar Site
+            document.getElementById('siteForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = document.getElementById('siteId').value;
+                const siteData = {
+                    title: document.getElementById('siteTitle').value,
+                    url: document.getElementById('siteUrl').value,
+                    imageUrl: document.getElementById('siteImageUrl').value,
+                };
+                
+                const promise = id 
+                    ? sitesCollection.doc(id).update(siteData) // Atualizar
+                    : sitesCollection.add(siteData);          // Adicionar
+
+                promise.then(() => {
+                    closeSiteModal();
+                    showToast(`Site ${id ? 'atualizado' : 'adicionado'} com sucesso!`);
+                }).catch(err => {
+                    console.error("Erro ao salvar:", err);
+                    showToast('Erro ao salvar o site.', 'error');
+                });
+            });
+            
+            // --- Ações nos Cards (Editar/Excluir) ---
+            sitesGrid.addEventListener('click', (e) => {
+                const target = e.target;
+                if (!document.body.classList.contains('is-admin')) return; // Só funciona se for admin
+
+                const card = target.closest('.card');
+                if (!card) return;
+                
+                const id = card.dataset.id;
+                
+                if (target.classList.contains('delete-btn')) {
+                    if (confirm('Tem certeza que deseja excluir este site?')) {
+                        sitesCollection.doc(id).delete()
+                          .then(() => showToast('Site excluído com sucesso.'))
+                          .catch(err => showToast('Erro ao excluir o site.', 'error'));
+                    }
+                } else if (target.classList.contains('edit-btn')) {
+                    sitesCollection.doc(id).get().then(doc => {
+                        if (doc.exists) {
+                            openSiteModal('Editar Site', { id: doc.id, ...doc.data() });
+                        }
+                    });
+                }
+            });
+
+            // --- Função para mostrar notificações (Toast) ---
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast show ${type}`;
+                setTimeout(() => { toast.className = 'toast'; }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
