@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eprojects Garage - Sistema de Gestão</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <style>
+        /* Custom styles for modern look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Dark gray background */
+            background-image: radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+        
+        /* Glassmorphism effect for modals and cards */
+        .glass-effect {
+            background: rgba(31, 41, 55, 0.6); /* Semi-transparent background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4338ca;
+        }
+        
+        /* Styles for Admin Panel Tabs */
+        .admin-tab-btn.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        /* Style for printing */
+        @media print {
+            body, html {
+                background: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #print-view {
+                display: block !important;
+            }
+            .print-no-break {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+    <!-- Datalist for products autocomplete -->
+    <datalist id="products-datalist"></datalist>
+
+    <!-- App container that will be hidden for printing -->
+    <div id="app-container" class="">
+        <!-- Main Dashboard View -->
+        <div id="main-dashboard" class="p-4 md:p-8">
+            <header class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-4">
+                    <img src="https://i.imgur.com/EDw5HWL.png" alt="Logo Eprojects Garage" class="h-12 md:h-16">
+                    <h1 class="text-2xl md:text-4xl font-bold text-white">Eprojects Garage</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                     <button id="admin-panel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105">
+                        <i class="fas fa-cog"></i>
+                        <span class="hidden md:inline">Admin</span>
+                    </button>
+                    <button id="add-vehicle-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105">
+                        <i class="fas fa-plus"></i>
+                        <span class="hidden md:inline">Cadastrar Veículo</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="mb-8">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </span>
+                    <input type="text" id="search-plate" placeholder="Buscar por placa..." class="w-full pl-10 pr-4 py-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <div id="car-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                 <div id="loading-cars" class="text-center col-span-full mt-10">Carregando veículos...</div>
+            </div>
+        </div>
+        
+        <!-- Vehicle Details View -->
+        <div id="vehicle-details-view" class="hidden p-4 md:p-8">
+            <button id="back-to-dashboard" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 mb-6 transition-colors">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+            <div id="vehicle-header" class="glass-effect p-6 rounded-2xl mb-8"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-effect p-6 rounded-2xl">
+                    <h3 class="text-xl font-bold mb-4 text-white">Histórico de Serviços</h3>
+                    <div id="service-history-list" class="space-y-3"></div>
+                </div>
+                <div id="active-service-column"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals (outside the main app container for easier management) -->
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden no-print">
+        <div class="glass-effect p-8 rounded-2xl w-full max-w-4xl m-4 shadow-2xl flex flex-col h-full max-h-[90vh]">
+            <h2 class="text-3xl font-bold mb-6 text-white text-center">Painel Administrativo</h2>
+            
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-700 mb-6">
+                <button data-tab="settings" class="admin-tab-btn flex-1 py-2 px-4 text-gray-300 hover:bg-gray-700/50 transition-colors active">Configurações</button>
+                <button data-tab="products" class="admin-tab-btn flex-1 py-2 px-4 text-gray-300 hover:bg-gray-700/50 transition-colors">Produtos</button>
+                <button data-tab="danger-zone" class="admin-tab-btn flex-1 py-2 px-4 text-gray-300 hover:bg-red-900/50 hover:text-red-300 transition-colors">Zona de Perigo</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="flex-grow overflow-y-auto">
+                <!-- Settings Tab -->
+                <div id="admin-tab-settings" class="admin-tab-content">
+                    <h3 class="text-xl font-semibold mb-4 text-white">Configurações da Oficina</h3>
+                     <form id="settings-form" class="space-y-4">
+                        <div>
+                            <label for="workshop-name" class="block text-sm font-medium text-gray-300 mb-1">Nome da Oficina</label>
+                            <input type="text" id="workshop-name" class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500">
+                        </div>
+                         <div>
+                            <label for="workshop-address" class="block text-sm font-medium text-gray-300 mb-1">Endereço</label>
+                            <input type="text" id="workshop-address" class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500">
+                        </div>
+                         <div>
+                            <label for="workshop-phone" class="block text-sm font-medium text-gray-300 mb-1">Telefone / Contato</label>
+                            <input type="text" id="workshop-phone" class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="flex justify-end gap-4 pt-4">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">Salvar Configurações</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- Products Tab -->
+                <div id="admin-tab-products" class="admin-tab-content hidden">
+                    <h3 class="text-xl font-semibold mb-4 text-white">Gerenciar Produtos</h3>
+                     <form id="add-product-form" class="grid grid-cols-3 gap-3 mb-4">
+                        <input type="text" id="product-name" placeholder="Nome do Produto/Peça" class="p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 col-span-2" required>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Cadastrar Produto</button>
+                     </form>
+                     <div class="flex-grow overflow-y-auto mt-4 border-t border-gray-700 pt-4">
+                         <div id="product-list" class="space-y-2"></div>
+                     </div>
+                </div>
+                <!-- Danger Zone Tab -->
+                <div id="admin-tab-danger-zone" class="admin-tab-content hidden">
+                    <div class="border-2 border-red-500/50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-2 text-red-400">Apagar Histórico de Serviço Específico</h3>
+                        <p class="text-gray-400 mb-4">Selecione o veículo e o serviço finalizado que deseja apagar. Esta ação é irreversível.</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="danger-vehicle-select" class="block text-sm font-medium text-gray-300 mb-1">1. Selecione o Veículo</label>
+                                <select id="danger-vehicle-select" class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500"></select>
+                            </div>
+                             <div>
+                                <label for="danger-service-select" class="block text-sm font-medium text-gray-300 mb-1">2. Selecione o Serviço Finalizado</label>
+                                <select id="danger-service-select" class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500" disabled></select>
+                            </div>
+                             <button id="delete-selected-service-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg disabled:bg-red-900 disabled:cursor-not-allowed" disabled>
+                                <i class="fas fa-trash-alt mr-2"></i>Apagar Serviço Selecionado
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-8 pt-4 border-t border-gray-700">
+                <button type="button" id="close-admin-modal-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Custom Alert Modal -->
+    <div id="alert-modal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] hidden no-print">
+        <div class="glass-effect p-8 rounded-2xl w-full max-w-md m-4 shadow-2xl text-center">
+            <h2 id="alert-title" class="text-2xl font-bold mb-4 text-white">Aviso</h2>
+            <p id="alert-message" class="text-gray-300 mb-6"></p>
+            <button id="alert-ok-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-8 rounded-lg">OK</button>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] hidden no-print">
+        <div class="glass-effect p-8 rounded-2xl w-full max-w-md m-4 shadow-2xl">
+            <h2 id="confirmation-title" class="text-2xl font-bold mb-4 text-white">Confirmar Ação</h2>
+            <p id="confirmation-message" class="text-gray-300 mb-6">Você tem certeza?</p>
+            <div class="flex justify-end gap-4">
+                <button id="confirm-no-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Não</button>
+                <button id="confirm-yes-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Sim</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Vehicle Modal -->
+    <div id="add-vehicle-modal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden no-print">
+        <div class="glass-effect p-8 rounded-2xl w-full max-w-2xl m-4 shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6 text-white">Cadastrar Novo Veículo</h2>
+            <form id="add-vehicle-form">
+                 <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <input type="text" id="owner-name" placeholder="Nome do Proprietário" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 md:col-span-3" required>
+                    <input type="text" id="plate" placeholder="Placa" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 uppercase md:col-span-3" required>
+                    <input type="text" id="make" placeholder="Marca" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 md:col-span-2" required>
+                    <input type="text" id="model" placeholder="Modelo" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 md:col-span-2" required>
+                    <input type="number" id="year" placeholder="Ano" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 md:col-span-2" required min="1900" max="2100">
+                    <input type="number" id="mileage" placeholder="Quilometragem" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 md:col-span-3" required>
+                    <input type="text" id="vin" placeholder="Chassi (Opcional)" class="p-3 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 md:col-span-3">
+                </div>
+                <div class="flex justify-end gap-4 mt-8">
+                    <button type="button" id="cancel-add-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service Input Modal -->
+    <div id="service-input-modal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 hidden no-print">
+        <div class="glass-effect p-8 rounded-2xl w-full max-w-3xl m-4 shadow-2xl flex flex-col">
+            <h2 class="text-2xl font-bold mb-6 text-white">Lançar Itens de Serviço</h2>
+            <form id="service-input-form" class="flex-grow flex flex-col space-y-4">
+                <div>
+                    <label for="service-mileage" class="block text-sm font-medium text-gray-300 mb-1">Quilometragem do Serviço</label>
+                    <input type="number" id="service-mileage" class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500" placeholder="Km atual do veículo...">
+                </div>
+                <div class="space-y-3 max-h-60 overflow-y-auto pr-2" id="service-input-items-container"></div>
+                <div>
+                    <button type="button" id="add-more-products-btn" class="w-full text-center bg-indigo-900/50 hover:bg-indigo-900 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Adicionar mais produtos
+                    </button>
+                </div>
+                <div>
+                    <label for="service-observations" class="block text-sm font-medium text-gray-300 mb-1">Observações</label>
+                    <textarea id="service-observations" rows="3" placeholder="Digite aqui observações sobre o serviço, peças ou cliente..." class="w-full p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-700">
+                    <button type="button" id="clear-service-form-btn" class="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-6 rounded-lg transition-colors"><i class="fas fa-eraser mr-2"></i>Limpar</button>
+                    <div class="flex gap-4">
+                        <button type="button" id="cancel-service-input-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Cancelar</button>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Salvar Alterações</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Print View -->
+    <div id="print-view" class="hidden p-8 bg-white text-black max-w-4xl mx-auto">
+        <div id="print-content" class="print-no-break">
+            <header class="flex justify-between items-start pb-4 border-b-2 border-gray-200">
+                <div>
+                    <img id="print-logo" src="https://i.imgur.com/vFTyCAC.png" alt="Logo da Oficina" class="h-20">
+                    <h1 id="print-workshop-name" class="text-3xl font-bold text-gray-800 mt-2">Eprojects Garage</h1>
+                    <p id="print-workshop-address" class="text-gray-600">Rua das Oficinas, 123 - Centro</p>
+                    <p id="print-workshop-phone" class="text-gray-600">Brusque - SC | (47) 99999-8888</p>
+                </div>
+                <div class="text-right">
+                    <h2 id="print-title" class="text-2xl font-bold text-gray-800">ORÇAMENTO</h2>
+                    <p id="print-doc-id" class="text-gray-600">Nº: 2025-001</p>
+                    <p id="print-date" class="text-gray-600">Data: 30/06/2025</p>
+                </div>
+            </header>
+
+            <section class="grid grid-cols-2 gap-8 my-6">
+                <div id="print-client-info" class="print-no-break">
+                    <h3 class="font-bold text-gray-700 border-b pb-1 mb-2">CLIENTE</h3>
+                </div>
+                <div id="print-vehicle-info" class="print-no-break">
+                     <h3 class="font-bold text-gray-700 border-b pb-1 mb-2">VEÍCULO</h3>
+                </div>
+            </section>
+
+            <section id="print-items-section" class="my-6 print-no-break">
+                <h3 class="font-bold text-gray-700 border-b pb-1 mb-2">ITENS DO SERVIÇO</h3>
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-2 text-left font-bold text-gray-700">Descrição</th>
+                            <th class="p-2 text-center font-bold text-gray-700">Qtd.</th>
+                            <th class="p-2 text-right font-bold text-gray-700">Valor Unit.</th>
+                            <th class="p-2 text-right font-bold text-gray-700">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="print-items-table-body"></tbody>
+                </table>
+            </section>
+            
+            <section id="print-observations-section" class="my-6 print-no-break hidden">
+                <h3 class="font-bold text-gray-700 border-b pb-1 mb-2">OBSERVAÇÕES</h3>
+                <p id="print-observations-text" class="text-gray-600 text-sm p-2 bg-gray-50 rounded"></p>
+            </section>
+
+            <section id="print-total-section" class="flex justify-end my-6 print-no-break">
+                <div class="w-full max-w-xs">
+                    <div class="flex justify-between items-center bg-gray-200 p-3 rounded-t-lg">
+                        <span class="font-bold text-xl text-gray-800">VALOR TOTAL</span>
+                        <span id="print-total" class="font-bold text-xl text-gray-800">R$ 0,00</span>
+                    </div>
+                </div>
+            </section>
+            
+            <footer class="text-center text-gray-500 text-sm mt-12 pt-4 border-t">
+                 <p>Garantia de peças e serviços: 90 dias.</p>
+                 <p id="quote-validity" class="hidden">Validade do Orçamento: 3 dias.</p>
+            </footer>
+        </div>
+         <div id="print-button-container" class="fixed bottom-4 right-4 no-print">
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-lg shadow-lg">
+                <i class="fas fa-print mr-2"></i>Imprimir / Salvar PDF
+            </button>
+            <button id="close-print-view" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-5 rounded-lg shadow-lg ml-4">
+                <i class="fas fa-times mr-2"></i>Fechar
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, onSnapshot, doc, getDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        // Your web app's Firebase configuration from user input
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1Ajh1DOmKkEe6_0e2qGnKukn7efbpBwY",
+            authDomain: "minhagaragem-2956b.firebaseapp.com",
+            projectId: "minhagaragem-2956b",
+            storageBucket: "minhagaragem-2956b.appspot.com",
+            messagingSenderId: "155153940062",
+            appId: "1:155153940062:web:7a71dfe2e753765bc83ecf",
+            measurementId: "G-FTLRD2PZR2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // State variables
+        let currentVehicleId = null;
+        let currentServiceId = null;
+        let currentServiceData = null;
+        let unsubscribeVehicleListener = null;
+        let unsubscribeServicesListener = null;
+        let unsubscribeProductsListener = null;
+        let productList = [];
+        let allVehicles = [];
+        let workshopInfo = {
+            name: 'Eprojects Garage',
+            address: 'Rua das Oficinas, 123 - Centro',
+            phone: 'Brusque - SC | (47) 99999-8888'
+        };
+        let onConfirmCallback = null;
+
+        // DOM Elements
+        const appContainer = document.getElementById('app-container');
+        const mainDashboard = document.getElementById('main-dashboard');
+        const vehicleDetailsView = document.getElementById('vehicle-details-view');
+        const printView = document.getElementById('print-view');
+        const carList = document.getElementById('car-list');
+        const searchPlate = document.getElementById('search-plate');
+        const loadingCars = document.getElementById('loading-cars');
+
+        // Modals
+        const alertModal = document.getElementById('alert-modal');
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const addVehicleModal = document.getElementById('add-vehicle-modal');
+        const addVehicleBtn = document.getElementById('add-vehicle-btn');
+        const cancelAddBtn = document.getElementById('cancel-add-btn');
+        const addVehicleForm = document.getElementById('add-vehicle-form');
+        const serviceInputModal = document.getElementById('service-input-modal');
+        const serviceInputForm = document.getElementById('service-input-form');
+        const cancelServiceInputBtn = document.getElementById('cancel-service-input-btn');
+        const addMoreProductsBtn = document.getElementById('add-more-products-btn');
+        const clearServiceFormBtn = document.getElementById('clear-service-form-btn');
+        const adminModal = document.getElementById('admin-modal');
+        const adminPanelBtn = document.getElementById('admin-panel-btn');
+        const closeAdminModalBtn = document.getElementById('close-admin-modal-btn');
+        const addProductForm = document.getElementById('add-product-form');
+        const settingsForm = document.getElementById('settings-form');
+        const deleteSelectedServiceBtn = document.getElementById('delete-selected-service-btn');
+        const dangerVehicleSelect = document.getElementById('danger-vehicle-select');
+        const dangerServiceSelect = document.getElementById('danger-service-select');
+
+
+        // Details view elements
+        const backToDashboardBtn = document.getElementById('back-to-dashboard');
+        const vehicleHeader = document.getElementById('vehicle-header');
+        const serviceHistoryList = document.getElementById('service-history-list');
+        const activeServiceColumn = document.getElementById('active-service-column');
+
+        // Action buttons
+        const closePrintViewBtn = document.getElementById('close-print-view');
+
+        // --- CUSTOM MODAL FUNCTIONS ---
+        function showAlert(message, title = 'Aviso') {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            alertModal.classList.remove('hidden');
+        }
+
+        function showConfirmation(message, title = 'Confirmar Ação', onConfirm) {
+            document.getElementById('confirmation-title').innerText = title;
+            document.getElementById('confirmation-message').innerText = message;
+            onConfirmCallback = onConfirm;
+            confirmationModal.classList.remove('hidden');
+        }
+
+        document.getElementById('alert-ok-btn').addEventListener('click', () => alertModal.classList.add('hidden'));
+        document.getElementById('confirm-no-btn').addEventListener('click', () => confirmationModal.classList.add('hidden'));
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            confirmationModal.classList.add('hidden');
+            if (onConfirmCallback) {
+                onConfirmCallback();
+            }
+        });
+
+        // Utility Functions
+        const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        const formatDate = (timestamp) => {
+            if (!timestamp) return 'Data não disponível';
+            return new Date(timestamp.seconds * 1000).toLocaleDateString('pt-BR');
+        };
+
+        // --- AUTHENTICATION ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                fetchWorkshopInfo();
+                fetchVehicles();
+                fetchProducts();
+            } else {
+                signInAnonymously(auth).catch((error) => {
+                    showAlert(`Não foi possível conectar ao banco de dados: ${error.message}`, "Erro de Conexão");
+                });
+            }
+        });
+
+        // --- VIEWS MANAGEMENT ---
+        function showDashboard() {
+            mainDashboard.style.display = 'block';
+            vehicleDetailsView.style.display = 'none';
+            appContainer.classList.remove('hidden');
+            printView.classList.add('hidden');
+            adminModal.classList.add('hidden');
+            serviceInputModal.classList.add('hidden');
+            currentVehicleId = null;
+            if (unsubscribeServicesListener) unsubscribeServicesListener();
+        }
+
+        async function showVehicleDetails(vehicleId) {
+            currentVehicleId = vehicleId;
+            mainDashboard.style.display = 'none';
+            vehicleDetailsView.style.display = 'block';
+            printView.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+
+            try {
+                const vehicleDocRef = doc(db, "veiculos", vehicleId);
+                const vehicleSnap = await getDoc(vehicleDocRef);
+                if (vehicleSnap.exists()) {
+                    const vehicle = vehicleSnap.data();
+                    vehicleHeader.innerHTML = `
+                        <h2 class="text-3xl font-bold text-white">${vehicle.make} ${vehicle.model} - ${vehicle.year}</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-gray-300">
+                            <div><strong class="text-indigo-400">Placa:</strong> ${vehicle.plate}</div>
+                            <div><strong class="text-indigo-400">Proprietário:</strong> ${vehicle.ownerName}</div>
+                            <div><strong class="text-indigo-400">Km:</strong> ${vehicle.mileage.toLocaleString('pt-BR')}</div>
+                            <div><strong class="text-indigo-400">Chassi:</strong> ${vehicle.vin || 'N/A'}</div>
+                        </div>`;
+                    fetchServicesForVehicle(vehicleId);
+                }
+            } catch (error) {
+                showAlert(`Erro ao buscar detalhes do veículo: ${error.message}`, "Erro");
+            }
+        }
+        
+        function showPrintView() {
+            appContainer.classList.add('hidden');
+            printView.classList.remove('hidden');
+        }
+
+        // --- DATA FETCHING & RENDERING ---
+        async function fetchWorkshopInfo() {
+            const docRef = doc(db, "config", "workshopInfo");
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    workshopInfo = docSnap.data();
+                } else {
+                    await setDoc(docRef, workshopInfo);
+                }
+            } catch(error) {
+                showAlert(`Erro ao carregar configurações: ${error.message}`, "Erro");
+            }
+        }
+
+        function fetchVehicles() {
+            if (unsubscribeVehicleListener) unsubscribeVehicleListener();
+            
+            const q = query(collection(db, "veiculos"), orderBy("plate"));
+            unsubscribeVehicleListener = onSnapshot(q, (querySnapshot) => {
+                allVehicles = [];
+                querySnapshot.forEach((doc) => {
+                    allVehicles.push({ id: doc.id, ...doc.data() });
+                });
+                renderCarList(allVehicles);
+                populateAdminVehicleSelect();
+                loadingCars.style.display = 'none';
+            }, (error) => {
+                loadingCars.innerHTML = `<div class="text-red-400 text-center p-4 bg-red-900/50 rounded-lg col-span-full"><p class="font-bold">Erro de Permissão ao Carregar Veículos</p><p class="text-sm mt-2">Verifique as regras de segurança do seu banco de dados no Firebase.</p><p class="text-xs mt-2 font-mono">Erro: ${error.message}</p></div>`;
+            });
+        }
+        
+        function fetchProducts() {
+            if (unsubscribeProductsListener) unsubscribeProductsListener();
+            
+            const q = query(collection(db, "produtos"), orderBy("name"));
+            unsubscribeProductsListener = onSnapshot(q, (querySnapshot) => {
+                productList = [];
+                querySnapshot.forEach((doc) => {
+                    productList.push({ id: doc.id, ...doc.data() });
+                });
+                updateProductDatalist();
+                renderProductManagementList();
+            });
+        }
+
+        function renderCarList(vehicles) {
+            carList.innerHTML = '';
+            if (vehicles.length === 0) {
+                 carList.innerHTML = `<div class="text-center col-span-full mt-10">Nenhum veículo cadastrado. Clique em "Cadastrar Veículo" para começar.</div>`;
+                 return;
+            }
+            vehicles.forEach(vehicle => {
+                const carCard = document.createElement('div');
+                carCard.className = 'car-card glass-effect p-6 rounded-2xl flex flex-col justify-between hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer shadow-lg';
+                carCard.dataset.plate = vehicle.plate.toLowerCase();
+                carCard.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start">
+                             <h3 class="text-xl font-bold text-white mb-2">${vehicle.make} ${vehicle.model} <span class="font-normal text-lg text-gray-300">${vehicle.year || ''}</span></h3>
+                             <i class="fas fa-car-side text-2xl text-indigo-400"></i>
+                        </div>
+                        <p class="text-gray-400"><strong class="text-gray-300">Placa:</strong> ${vehicle.plate}</p>
+                        <p class="text-gray-400"><strong class="text-gray-300">Proprietário:</strong> ${vehicle.ownerName}</p>
+                        <p class="text-gray-400"><strong class="text-gray-300">Km:</strong> ${vehicle.mileage.toLocaleString('pt-BR')}</p>
+                    </div>
+                    <button class="view-details-btn bg-indigo-600/50 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg mt-4 w-full transition-colors">Ver Detalhes</button>
+                `;
+                carCard.querySelector('.view-details-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showVehicleDetails(vehicle.id);
+                });
+                carList.appendChild(carCard);
+            });
+        }
+        
+        function fetchServicesForVehicle(vehicleId) {
+            if(unsubscribeServicesListener) unsubscribeServicesListener();
+
+            const servicesRef = collection(db, "veiculos", vehicleId, "servicos");
+            const q = query(servicesRef, orderBy("createdAt", "desc"));
+
+            unsubscribeServicesListener = onSnapshot(q, (querySnapshot) => {
+                const openServices = [];
+                const closedServices = [];
+
+                querySnapshot.forEach(doc => {
+                    const service = { id: doc.id, ...doc.data() };
+                    if (service.status === 'open') {
+                        openServices.push(service);
+                    } else {
+                        closedServices.push(service);
+                    }
+                });
+                
+                renderServiceHistory(closedServices);
+
+                if (openServices.length > 0) {
+                    currentServiceId = openServices[0].id;
+                    currentServiceData = openServices[0];
+                    renderActiveServiceView(currentServiceData);
+                } else {
+                    currentServiceId = null;
+                    currentServiceData = null;
+                    renderCreateServiceButton();
+                }
+            });
+        }
+        
+        function renderServiceHistory(closedServices) {
+            serviceHistoryList.innerHTML = '';
+            if (closedServices.length > 0) {
+                closedServices.forEach(service => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'bg-gray-800/50 p-3 rounded-lg flex justify-between items-center';
+                    historyItem.innerHTML = `
+                        <div>
+                           <p class="font-semibold text-white">Serviço em ${formatDate(service.finishedAt)}</p>
+                           <p class="text-sm text-gray-400">Km: ${service.mileage.toLocaleString('pt-BR')} - Total: ${formatCurrency(service.total)}</p>
+                        </div>
+                        <button class="view-history-btn bg-gray-600 hover:bg-gray-700 text-sm py-1 px-2 rounded" data-service-id="${service.id}">Ver Nota</button>
+                    `;
+                    serviceHistoryList.appendChild(historyItem);
+                });
+                document.querySelectorAll('.view-history-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const serviceId = btn.dataset.serviceId;
+                        const serviceToPrint = closedServices.find(s => s.id === serviceId);
+                        if(serviceToPrint) {
+                            preparePrintView(serviceToPrint, true);
+                        }
+                    });
+                });
+            } else {
+                serviceHistoryList.innerHTML = '<p class="text-gray-400 text-center">Nenhum serviço finalizado.</p>';
+            }
+        }
+        
+        function renderCreateServiceButton() {
+            activeServiceColumn.innerHTML = `
+                <div class="glass-effect p-6 rounded-2xl flex flex-col items-center justify-center h-full">
+                    <p class="text-gray-400 mb-4">Este veículo não possui um serviço em aberto.</p>
+                    <button id="create-new-service-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105">
+                        <i class="fas fa-plus"></i> Criar Orçamento / Serviço
+                    </button>
+                </div>
+            `;
+            document.getElementById('create-new-service-btn').addEventListener('click', createNewService);
+        }
+
+        function renderActiveServiceView(service) {
+            activeServiceColumn.innerHTML = `
+                <div class="glass-effect p-6 rounded-2xl flex flex-col h-full space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold mb-1 text-white">Serviço em Aberto</h3>
+                            <p class="text-sm text-gray-400">Criado em: ${formatDate(service.createdAt)}</p>
+                        </div>
+                        <button id="edit-service-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                            <i class="fas fa-edit"></i> Adicionar / Editar Itens
+                        </button>
+                    </div>
+                    <div class="flex-grow">
+                         <h4 class="text-lg font-bold mb-2 text-white">Itens do Serviço</h4>
+                         <div id="service-items-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div>
+                    </div>
+                    <div id="service-total" class="text-right text-2xl font-bold pt-4 border-t border-gray-700"></div>
+                     <div class="flex justify-end gap-4">
+                        <button id="generate-quote-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Gerar Orçamento</button>
+                        <button id="generate-invoice-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Finalizar e Gerar Nota</button>
+                    </div>
+                </div>
+            `;
+            
+            renderActiveServiceItems(service.items || []);
+            
+            document.getElementById('edit-service-btn').addEventListener('click', () => handleEditService(service));
+            document.getElementById('generate-quote-btn').addEventListener('click', handleGenerateQuote);
+            document.getElementById('generate-invoice-btn').addEventListener('click', handleGenerateInvoice);
+        }
+
+        function renderActiveServiceItems(items) {
+            const serviceItemsList = document.getElementById('service-items-list');
+            const serviceTotalEl = document.getElementById('service-total');
+            serviceItemsList.innerHTML = '';
+            let total = 0;
+            
+            if (items.length > 0) {
+                items.forEach((item) => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'bg-gray-800/50 p-3 rounded-lg flex items-center justify-between';
+                    itemEl.innerHTML = `
+                        <div class="flex-1">
+                            <p class="font-semibold text-white">${item.description}</p>
+                            <p class="text-sm text-gray-400">${item.quantity} x ${formatCurrency(item.value)}</p>
+                        </div>
+                        <p class="font-bold text-white mx-4">${formatCurrency(item.quantity * item.value)}</p>
+                    `;
+                    serviceItemsList.appendChild(itemEl);
+                    total += item.quantity * item.value;
+                });
+            } else {
+                serviceItemsList.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum item adicionado. Clique em "Adicionar / Editar Itens" para começar.</p>';
+            }
+
+            serviceTotalEl.innerHTML = `TOTAL: ${formatCurrency(total)}`;
+        }
+
+        // --- SERVICE INPUT MODAL LOGIC ---
+        function addServiceItemRow(item = {}) {
+            const container = document.getElementById('service-input-items-container');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 gap-2 items-center service-item-row';
+
+            row.innerHTML = `
+                <div class="col-span-6 relative">
+                    <input type="text" placeholder="Peça / Produto / Serviço" class="p-2 w-full rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 item-description" list="products-datalist" value="${item.description || ''}">
+                    <button type="button" class="hidden absolute right-2 top-1/2 -translate-y-1/2 quick-add-product-btn bg-blue-600 hover:bg-blue-700 text-white rounded-full w-6 h-6 flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                </div>
+                <input type="number" placeholder="Qtd" value="${item.quantity || 1}" min="0" step="0.01" class="p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 col-span-2 item-quantity">
+                <input type="number" placeholder="Valor Unit." value="${item.value || ''}" min="0" step="0.01" class="p-2 rounded-lg text-white glass-effect focus:outline-none focus:border-indigo-500 col-span-3 item-value">
+                <button type="button" class="text-red-500 hover:text-red-400 col-span-1 delete-item-row-btn"><i class="fas fa-trash-alt"></i></button>
+            `;
+            container.appendChild(row);
+            
+            const descriptionInput = row.querySelector('.item-description');
+            const quickAddBtn = row.querySelector('.quick-add-product-btn');
+
+            descriptionInput.addEventListener('input', () => {
+                const existingProduct = productList.find(p => p.name.toLowerCase() === descriptionInput.value.toLowerCase());
+                if (descriptionInput.value && !existingProduct) {
+                    quickAddBtn.classList.remove('hidden');
+                } else {
+                    quickAddBtn.classList.add('hidden');
+                }
+            });
+
+            quickAddBtn.addEventListener('click', async () => {
+                const newName = descriptionInput.value;
+                if (newName) {
+                    await quickAddProduct(newName);
+                    quickAddBtn.classList.add('hidden');
+                }
+            });
+
+            row.querySelector('.delete-item-row-btn').addEventListener('click', () => {
+                row.remove();
+            });
+        }
+
+        addMoreProductsBtn.addEventListener('click', () => addServiceItemRow());
+        
+        cancelServiceInputBtn.addEventListener('click', () => {
+            serviceInputForm.reset();
+            document.getElementById('service-input-items-container').innerHTML = '';
+            serviceInputModal.classList.add('hidden');
+        });
+
+        clearServiceFormBtn.addEventListener('click', () => {
+            document.getElementById('service-input-items-container').innerHTML = '';
+            document.getElementById('service-observations').value = '';
+            addServiceItemRow();
+        });
+
+        // --- ADMIN PANEL LOGIC ---
+        adminPanelBtn.addEventListener('click', () => {
+            document.getElementById('workshop-name').value = workshopInfo.name;
+            document.getElementById('workshop-address').value = workshopInfo.address;
+            document.getElementById('workshop-phone').value = workshopInfo.phone;
+            adminModal.classList.remove('hidden');
+            showAdminTab('settings');
+        });
+        
+        closeAdminModalBtn.addEventListener('click', () => {
+            adminModal.classList.add('hidden');
+        });
+
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                showAdminTab(btn.dataset.tab);
+            });
+        });
+
+        function showAdminTab(tabName) {
+            document.querySelectorAll('.admin-tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(`admin-tab-${tabName}`).classList.remove('hidden');
+            document.querySelector(`.admin-tab-btn[data-tab="${tabName}"]`).classList.add('active');
+        }
+
+        function populateAdminVehicleSelect() {
+            dangerVehicleSelect.innerHTML = '<option value="">-- Selecione um Veículo --</option>';
+            allVehicles.forEach(vehicle => {
+                const option = document.createElement('option');
+                option.value = vehicle.id;
+                option.textContent = `${vehicle.plate} - ${vehicle.model} (${vehicle.ownerName})`;
+                dangerVehicleSelect.appendChild(option);
+            });
+        }
+        
+        dangerVehicleSelect.addEventListener('change', async (e) => {
+            const vehicleId = e.target.value;
+            dangerServiceSelect.innerHTML = '<option value="">-- Carregando Serviços --</option>';
+            dangerServiceSelect.disabled = true;
+            deleteSelectedServiceBtn.disabled = true;
+
+            if (!vehicleId) {
+                dangerServiceSelect.innerHTML = '<option value="">-- Selecione um Veículo Primeiro --</option>';
+                return;
+            }
+
+            const servicesRef = collection(db, 'veiculos', vehicleId, 'servicos');
+            const querySnapshot = await getDocs(servicesRef);
+
+            const closedServices = [];
+            querySnapshot.forEach(doc => {
+                const service = { id: doc.id, ...doc.data() };
+                if (service.status === 'closed') {
+                    closedServices.push(service);
+                }
+            });
+
+            closedServices.sort((a, b) => {
+                const dateA = a.finishedAt ? a.finishedAt.seconds : 0;
+                const dateB = b.finishedAt ? b.finishedAt.seconds : 0;
+                return dateB - dateA; // descending
+            });
+
+            dangerServiceSelect.innerHTML = '<option value="">-- Selecione um Serviço Finalizado --</option>';
+            if (closedServices.length === 0) {
+                 dangerServiceSelect.innerHTML = '<option value="">-- Nenhum Serviço Finalizado --</option>';
+            } else {
+                closedServices.forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service.id;
+                    option.textContent = `Serviço de ${formatDate(service.finishedAt)} - ${formatCurrency(service.total)}`;
+                    dangerServiceSelect.appendChild(option);
+                });
+                dangerServiceSelect.disabled = false;
+            }
+        });
+        
+        dangerServiceSelect.addEventListener('change', (e) => {
+            deleteSelectedServiceBtn.disabled = !e.target.value;
+        });
+
+        function updateProductDatalist() {
+            const datalist = document.getElementById('products-datalist');
+            datalist.innerHTML = '';
+            productList.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.name;
+                datalist.appendChild(option);
+            });
+        }
+        
+        function renderProductManagementList() {
+            const container = document.getElementById('product-list');
+            container.innerHTML = '';
+             if (productList.length === 0) {
+                 container.innerHTML = '<p class="text-gray-400 text-center">Nenhum produto cadastrado.</p>';
+                 return;
+            }
+            productList.forEach(product => {
+                const productEl = document.createElement('div');
+                productEl.className = 'bg-gray-800/50 p-2 rounded-lg flex items-center justify-between';
+                productEl.innerHTML = `
+                    <p class="font-semibold text-white">${product.name}</p>
+                    <button class="delete-product-btn text-red-500 hover:text-red-400" data-id="${product.id}"><i class="fas fa-trash-alt"></i></button>
+                `;
+                container.appendChild(productEl);
+            });
+
+            document.querySelectorAll('.delete-product-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = e.currentTarget.dataset.id;
+                    showConfirmation("Tem certeza que deseja apagar este produto?", "Apagar Produto", async () => {
+                       await deleteDoc(doc(db, "produtos", productId));
+                    });
+                });
+            });
+        }
+        
+        addProductForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const productNameInput = document.getElementById('product-name');
+            const name = productNameInput.value;
+            if (name) {
+                await quickAddProduct(name);
+                productNameInput.value = '';
+            }
+        });
+        
+        async function quickAddProduct(name) {
+            try {
+                const existingProduct = productList.find(p => p.name.toLowerCase() === name.toLowerCase());
+                if (existingProduct) {
+                    showAlert("Este produto já existe.");
+                    return;
+                }
+                await addDoc(collection(db, "produtos"), { name: name });
+            } catch(error) {
+                showAlert(`Falha ao adicionar produto: ${error.message}`, "Erro");
+            }
+        }
+
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newInfo = {
+                name: document.getElementById('workshop-name').value,
+                address: document.getElementById('workshop-address').value,
+                phone: document.getElementById('workshop-phone').value,
+            };
+            
+            const docRef = doc(db, "config", "workshopInfo");
+            await setDoc(docRef, newInfo);
+            workshopInfo = newInfo;
+            showAlert("Informações da oficina salvas com sucesso!");
+        });
+
+        deleteSelectedServiceBtn.addEventListener('click', () => {
+            const vehicleId = dangerVehicleSelect.value;
+            const serviceId = dangerServiceSelect.value;
+            
+            if (!vehicleId || !serviceId) {
+                showAlert("Por favor, selecione um veículo e um serviço para apagar.");
+                return;
+            }
+
+            const selectedVehicleText = dangerVehicleSelect.options[dangerVehicleSelect.selectedIndex].text;
+            const selectedServiceText = dangerServiceSelect.options[dangerServiceSelect.selectedIndex].text;
+
+            showConfirmation(
+                `Você está prestes a apagar o seguinte serviço:\n\nVeículo: ${selectedVehicleText}\nServiço: ${selectedServiceText}\n\nEsta ação é IRREVERSÍVEL. Deseja continuar?`,
+                'Apagar Serviço do Histórico',
+                async () => {
+                    try {
+                        await deleteDoc(doc(db, 'veiculos', vehicleId, 'servicos', serviceId));
+                        showAlert("O serviço foi apagado do histórico com sucesso!");
+                        dangerVehicleSelect.value = '';
+                        dangerVehicleSelect.dispatchEvent(new Event('change'));
+                    } catch(error) {
+                        showAlert(`Erro ao apagar o serviço: ${error.message}`, "Erro");
+                    }
+                }
+            );
+        });
+
+
+        // --- DATA MANIPULATION & EVENT HANDLERS ---
+        addVehicleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newVehicle = {
+                ownerName: document.getElementById('owner-name').value,
+                plate: document.getElementById('plate').value.toUpperCase(),
+                mileage: Number(document.getElementById('mileage').value),
+                make: document.getElementById('make').value,
+                model: document.getElementById('model').value,
+                year: Number(document.getElementById('year').value),
+                vin: document.getElementById('vin').value,
+            };
+            try {
+                await addDoc(collection(db, "veiculos"), newVehicle);
+                addVehicleForm.reset();
+                addVehicleModal.classList.add('hidden');
+            } catch (error) {
+                showAlert(`Erro ao salvar o veículo: ${error.message}`, "Erro");
+            }
+        });
+        
+        async function createNewService() {
+            const servicesRef = collection(db, "veiculos", currentVehicleId, "servicos");
+            const vehicleDocRef = doc(db, "veiculos", currentVehicleId);
+            try {
+                const vehicleSnap = await getDoc(vehicleDocRef);
+                const vehicleData = vehicleSnap.data();
+
+                const newServiceDoc = await addDoc(servicesRef, {
+                    status: 'open',
+                    createdAt: serverTimestamp(),
+                    mileage: vehicleData.mileage,
+                    items: [],
+                    total: 0,
+                    observations: ''
+                });
+
+                // Open the edit modal immediately after creating
+                handleEditService({ id: newServiceDoc.id, mileage: vehicleData.mileage, items: [], observations: '' });
+            } catch (error) {
+                showAlert(`Falha ao criar novo serviço: ${error.message}`, "Erro");
+            }
+        }
+        
+        serviceInputForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentServiceId) {
+                showAlert("Erro: Nenhum serviço está selecionado para atualização.", "Erro");
+                return;
+            }
+
+            const items = [];
+            let total = 0;
+            document.querySelectorAll('.service-item-row').forEach(row => {
+                const description = row.querySelector('.item-description').value;
+                const quantity = parseFloat(row.querySelector('.item-quantity').value);
+                const value = parseFloat(row.querySelector('.item-value').value);
+
+                if(description && quantity > 0 && value >= 0) {
+                    items.push({ description, quantity, value });
+                    total += quantity * value;
+                }
+            });
+            
+            const serviceMileage = parseInt(document.getElementById('service-mileage').value);
+            const observations = document.getElementById('service-observations').value;
+            const serviceRef = doc(db, "veiculos", currentVehicleId, "servicos", currentServiceId);
+            const vehicleRef = doc(db, "veiculos", currentVehicleId);
+            
+            try {
+                // Update service document
+                await updateDoc(serviceRef, {
+                    items: items,
+                    total: total,
+                    observations: observations,
+                    mileage: serviceMileage,
+                });
+
+                // Check and update vehicle mileage
+                const vehicleSnap = await getDoc(vehicleRef);
+                if(vehicleSnap.exists()){
+                    const currentVehicleMileage = vehicleSnap.data().mileage;
+                    if(serviceMileage > currentVehicleMileage){
+                        await updateDoc(vehicleRef, { mileage: serviceMileage });
+                    }
+                }
+                
+                serviceInputForm.reset();
+                document.getElementById('service-input-items-container').innerHTML = '';
+                serviceInputModal.classList.add('hidden');
+            } catch (error) {
+                showAlert(`Falha ao atualizar o serviço: ${error.message}`, "Erro");
+            }
+        });
+
+        async function handleEditService(service) {
+            const container = document.getElementById('service-input-items-container');
+            container.innerHTML = '';
+            
+            const vehicleSnap = await getDoc(doc(db, "veiculos", currentVehicleId));
+            const vehicleMileage = vehicleSnap.data().mileage;
+
+            document.getElementById('service-mileage').value = service.mileage || vehicleMileage;
+
+            if (service.items && service.items.length > 0) {
+                service.items.forEach(item => {
+                    addServiceItemRow(item);
+                });
+            } else {
+                addServiceItemRow();
+            }
+
+            document.getElementById('service-observations').value = service.observations || '';
+            serviceInputModal.classList.remove('hidden');
+        }
+        
+        function handleGenerateQuote() {
+             if (!currentServiceData || !currentServiceData.items || currentServiceData.items.length === 0) {
+                showAlert("Adicione pelo menos um item ao serviço para gerar um orçamento.");
+                return;
+            }
+            preparePrintView(currentServiceData, false);
+        }
+
+        async function handleGenerateInvoice() {
+             if (!currentServiceData || !currentServiceData.items || currentServiceData.items.length === 0) {
+                showAlert("Adicione pelo menos um item ao serviço para gerar uma nota.");
+                return;
+            }
+            
+            const onConfirm = async () => {
+                const serviceRef = doc(db, "veiculos", currentVehicleId, "servicos", currentServiceId);
+                const dataToPrint = { ...currentServiceData, finishedAt: { seconds: Date.now() / 1000 }};
+                try {
+                    await updateDoc(serviceRef, {
+                        status: 'closed',
+                        finishedAt: serverTimestamp()
+                    });
+                    preparePrintView(dataToPrint, true);
+                } catch(error) {
+                    showAlert(`Falha ao finalizar a nota: ${error.message}`, "Erro");
+                }
+            };
+            
+            showConfirmation(
+                "Você tem certeza que deseja finalizar este serviço? Esta ação não pode ser desfeita.",
+                "Finalizar Serviço",
+                onConfirm
+            );
+        }
+
+        // --- GENERAL EVENT LISTENERS ---
+        addVehicleBtn.addEventListener('click', () => addVehicleModal.classList.remove('hidden'));
+        cancelAddBtn.addEventListener('click', () => addVehicleModal.classList.add('hidden'));
+        backToDashboardBtn.addEventListener('click', showDashboard);
+        searchPlate.addEventListener('keyup', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.car-card').forEach(card => {
+                if (card.dataset.plate.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        closePrintViewBtn.addEventListener('click', () => {
+            appContainer.classList.remove('hidden');
+            printView.classList.add('hidden');
+            if (currentVehicleId) {
+                showVehicleDetails(currentVehicleId);
+            } else {
+                showDashboard();
+            }
+        });
+        
+        // --- PRINT VIEW PREPARATION ---
+        async function preparePrintView(service, isInvoice) {
+            const vehicleSnap = await getDoc(doc(db, "veiculos", currentVehicleId));
+            const vehicle = vehicleSnap.data();
+
+            document.getElementById('print-workshop-name').innerText = workshopInfo.name;
+            document.getElementById('print-workshop-address').innerText = workshopInfo.address;
+            document.getElementById('print-workshop-phone').innerText = workshopInfo.phone;
+            document.getElementById('print-logo').src = 'https://i.imgur.com/vFTyCAC.png';
+
+            document.getElementById('print-title').innerText = isInvoice ? "NOTA DE SERVIÇO" : "ORÇAMENTO";
+            document.getElementById('quote-validity').style.display = isInvoice ? 'none' : 'block';
+
+            const docDate = service.finishedAt ? formatDate(service.finishedAt) : new Date().toLocaleDateString('pt-BR');
+            const docId = service.id.substring(0, 8).toUpperCase();
+            
+            document.getElementById('print-doc-id').innerText = `Nº: ${docId}`;
+            document.getElementById('print-date').innerText = `Data: ${docDate}`;
+            
+            document.getElementById('print-client-info').innerHTML = `<h3 class="font-bold text-gray-700 border-b pb-1 mb-2">CLIENTE</h3><p><strong>Nome:</strong> ${vehicle.ownerName}</p>`;
+            document.getElementById('print-vehicle-info').innerHTML = `<h3 class="font-bold text-gray-700 border-b pb-1 mb-2">VEÍCULO</h3><p><strong>Modelo:</strong> ${vehicle.make} ${vehicle.model}</p><p><strong>Ano:</strong> ${vehicle.year || 'N/A'}</p><p><strong>Placa:</strong> ${vehicle.plate}</p><p><strong>Km:</strong> ${service.mileage.toLocaleString('pt-BR')}</p><p><strong>Chassi:</strong> ${vehicle.vin || 'N/A'}</p>`;
+            
+            const observationsSection = document.getElementById('print-observations-section');
+            if (service.observations) {
+                document.getElementById('print-observations-text').innerText = service.observations;
+                observationsSection.classList.remove('hidden');
+            } else {
+                observationsSection.classList.add('hidden');
+            }
+
+            const itemsTableBody = document.getElementById('print-items-table-body');
+            itemsTableBody.innerHTML = '';
+            let total = 0;
+            service.items.forEach(item => {
+                const subtotal = item.quantity * item.value;
+                total += subtotal;
+                const row = document.createElement('tr');
+                row.className = 'border-b';
+                row.innerHTML = `<td class="p-2">${item.description}</td><td class="p-2 text-center">${item.quantity}</td><td class="p-2 text-right">${formatCurrency(item.value)}</td><td class="p-2 text-right">${formatCurrency(subtotal)}</td>`;
+                itemsTableBody.appendChild(row);
+            });
+
+            document.getElementById('print-total').innerText = formatCurrency(total);
+            
+            showPrintView();
+        }
+
+        // Initial call
+        showDashboard();
+
+    </script>
+</body>
+</html>
