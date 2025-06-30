@@ -7,34 +7,40 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <!-- Estilos CSS -->
     <style>
         :root {
-            --primary-color: #F9A826; /* Laranja da logo */
-            --secondary-color: #000000; /* Preto */
-            --background-color: #121212;
-            --card-color: #1E1E1E;
-            --text-color: #FFFFFF;
-            --text-muted: #AAAAAA;
-            --error-color: #ff6b6b;
-            --success-color: #4CAF50;
+            --primary-color: #F9A826;
+            --background-start: #111111;
+            --background-end: #1c1c1c;
+            --card-color: rgba(30, 30, 30, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #EAEAEA;
+            --text-muted: #888888;
+            --accent-blue: #3882F6;
+            --accent-red: #E53E3E;
+            --shadow-color: rgba(0, 0, 0, 0.5);
         }
 
         body {
             margin: 0;
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
+            font-family: 'Inter', sans-serif;
+            background-image: linear-gradient(180deg, var(--background-start) 0%, var(--background-end) 100%);
             color: var(--text-color);
-            transition: background-color 0.3s;
+            min-height: 100vh;
         }
-
+        
         /* --- Estrutura Principal --- */
         header {
-            background-color: var(--secondary-color);
+            background-color: rgba(18, 18, 18, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 15px 0;
-            border-bottom: 2px solid var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -51,49 +57,62 @@
         }
 
         .logo-header {
-            height: 50px;
+            height: 45px;
+            opacity: 0.9;
         }
         
-        #login-trigger-area {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 60px;
-            height: 60px;
-            cursor: pointer;
-            z-index: 101; /* Fica acima de outros elementos do header */
-            /* border: 1px dashed white; */ /* Remova o comentário para visualizar a área */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            font-weight: bold;
-            padding: 12px 20px;
+            background-image: linear-gradient(to right, #F9A826 0%, #FFC973 100%);
+            color: #111;
+            font-weight: 700;
+            padding: 10px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(249, 168, 38, 0.2);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(249, 168, 38, 0.3); }
+        .btn:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            transition: background-color 0.2s, color 0.2s;
+            box-shadow: none;
         }
-        .btn:hover { filter: brightness(1.1); }
-        .btn:disabled { background-color: #555; cursor: not-allowed; }
-
+        .btn-icon:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+            transform: none;
+        }
+        
         .btn-logout {
             width: auto;
-            background-color: transparent;
+            background: transparent;
             border: 1px solid var(--primary-color);
             color: var(--primary-color);
+            box-shadow: none;
         }
-        .btn-logout:hover { background-color: var(--primary-color); color: var(--secondary-color); }
+        .btn-logout:hover { background: var(--primary-color); color: #111; }
         
         main.container {
-            padding-top: 40px;
-            padding-bottom: 40px;
+            padding-top: 50px;
+            padding-bottom: 50px;
             flex-direction: column;
             align-items: flex-start;
         }
@@ -103,105 +122,146 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             flex-wrap: wrap;
             gap: 20px;
         }
 
-        .main-header h1 { color: var(--primary-color); margin: 0; }
+        .main-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-color);
+            margin: 0;
+            font-weight: 700;
+        }
         #addSiteBtn { width: auto; }
 
         /* Grid de Cards */
         #sitesGrid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
+            gap: 30px;
             width: 100%;
         }
 
         .card {
-            background-color: var(--card-color);
-            border-radius: 8px;
+            background: var(--card-color);
+            border-radius: 12px;
             overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             flex-direction: column;
-            border: 1px solid #333;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px var(--shadow-color);
         }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); border-color: var(--primary-color); }
-        .card-link { text-decoration: none; color: inherit; display: flex; flex-direction: column; flex-grow: 1; cursor: pointer; }
-        .card-image { height: 180px; background-color: #333; background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; }
-        .card-image .placeholder-icon { font-size: 50px; color: var(--text-muted); }
-        .card-content { padding: 20px; flex-grow: 1; }
-        .card-content h3 { margin: 0 0 10px 0; color: var(--primary-color); }
-        .card-content p { margin: 0; color: var(--text-muted); font-size: 14px; word-break: break-all; }
-        .card-actions { padding: 0 20px 20px 20px; display: flex; gap: 10px; }
-        .action-btn { padding: 8px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; font-weight: bold; flex-grow: 1; transition: filter 0.2s; }
-        .action-btn:hover { filter: brightness(1.2); }
-        .edit-btn { background-color: #4a90e2; color: white; }
-        .delete-btn { background-color: #e24a4a; color: white; }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+            border-color: rgba(249, 168, 38, 0.5);
+        }
+        
+        .card-header-link {
+            flex-grow: 1;
+        }
+        body.is-admin .card-header-link {
+            cursor: pointer;
+        }
+        
+        .card-image { height: 180px; background-color: #333; background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .card-image .placeholder-icon, .card-image .card-icon { font-size: 60px; color: var(--primary-color); opacity: 0.8; }
+        
+        .card-content { padding: 20px; }
+        .card-content h3 { margin: 0; color: var(--primary-color); font-size: 1.25rem; }
+        .card-actions { padding: 20px; padding-top: 0; display: flex; gap: 10px; }
+        
+        .action-btn {
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            flex-grow: 1;
+            transition: background-color 0.2s;
+            color: white;
+        }
+
+        .main-action-btn {
+            background-color: var(--accent-blue);
+        }
+        .main-action-btn:hover {
+            background-color: #579aff;
+        }
+        
+        .delete-btn { background-color: var(--accent-red); }
+        .delete-btn:hover { background-color: #ff5c5c; }
         
         /* Visibilidade de Controles de Admin */
         .admin-only { display: none !important; }
         body.is-admin .admin-only { display: flex !important; }
+        
+        .not-admin-only { display: flex !important; }
+        body.is-admin .not-admin-only { display: none !important; }
+
+        .admin-only-inline { display: none !important; }
+        body.is-admin .admin-only-inline { display: inline !important; }
+        
+        .not-admin-only-inline { display: inline !important; }
+        body.is-admin .not-admin-only-inline { display: none !important; }
+
 
         /* Indicador de Carregamento */
-        #loadingIndicator { text-align: center; padding: 50px; font-size: 1.2rem; color: var(--text-muted); }
+        #loadingIndicator { text-align: center; padding: 50px; font-size: 1.2rem; color: var(--text-muted); width: 100%; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-left-color: var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         #loginSpinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
         .btn:disabled #loginSpinner { display: block; }
         .btn:disabled span { display: none; }
 
-        /* Modals (Login e Edição de Site) */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            align-items: center; justify-content: center;
-        }
+        /* Modals */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
         .modal.visible { display: flex; }
-        .modal-content { background-color: var(--card-color); padding: 30px; border: 1px solid #444; border-radius: 8px; width: 90%; max-width: 500px; position: relative; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-content { background-color: var(--background-end); padding: 30px; border: 1px solid var(--border-color); border-radius: 12px; width: 90%; max-width: 450px; position: relative; animation: fadeIn 0.3s ease-out; box-shadow: 0 8px 32px var(--shadow-color); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .close-button { color: var(--text-muted); position: absolute; top: 15px; right: 25px; font-size: 32px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
         .close-button:hover { color: var(--text-color); }
-        .modal-content h2 { color: var(--primary-color); margin-top: 0; }
+        .modal-content h2 { color: var(--primary-color); margin-top: 0; text-align: center; }
         
         .input-group { margin-bottom: 20px; text-align: left; }
         .input-group label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px; }
-        .input-group input { width: 100%; padding: 12px; border-radius: 4px; border: 1px solid #444; background-color: #2a2a2a; color: var(--text-color); box-sizing: border-box; font-size: 16px; }
-        .input-group input:focus { outline: none; border-color: var(--primary-color); }
-        .error-message { color: var(--error-color); margin-top: 15px; font-size: 14px; height: 16px; text-align: center; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #2a2a2a; color: var(--text-color); box-sizing: border-box; font-size: 16px; }
+        .input-group input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(249, 168, 38, 0.2); }
+        .help-text { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        .error-message { color: var(--accent-red); margin-top: 15px; font-size: 14px; height: 16px; text-align: center; }
 
         /* Notificação Toast */
-        .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 6px; color: white; z-index: 2000; transition: bottom 0.5s ease; }
+        .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 8px; color: white; z-index: 2000; transition: bottom 0.5s ease; font-weight: 500; }
         .toast.show { bottom: 20px; }
-        .toast.success { background-color: var(--success-color); }
-        .toast.error { background-color: var(--error-color); }
+        .toast.success { background-color: #28a745; }
+        .toast.error { background-color: var(--accent-red); }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
             <img src="https://i.imgur.com/EDw5HWL.png" alt="Logo Projetos Industriais" class="logo-header">
-            <div id="login-trigger-area" title="Acesso do Administrador"></div>
-            <button id="logoutButton" class="btn btn-logout admin-only">Sair</button>
+            <div class="header-actions">
+                <button id="loginButtonTrigger" class="btn-icon not-admin-only" title="Acesso do Administrador">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </button>
+                <button id="logoutButton" class="btn btn-logout admin-only">Sair</button>
+            </div>
         </div>
     </header>
 
     <main class="container">
         <div class="main-header">
-            <h1>Meus Sites</h1>
+            <h1>Projetos</h1>
             <button id="addSiteBtn" class="btn admin-only">Adicionar Novo Site</button>
         </div>
         <div id="sitesGrid">
              <div id="loadingIndicator">
                  <div class="spinner"></div>
-                 <p>Carregando sites...</p>
+                 <p>Carregando projetos...</p>
              </div>
         </div>
     </main>
@@ -212,15 +272,9 @@
             <span class="close-button">&times;</span>
             <h2>Acesso Restrito</h2>
             <form id="loginForm">
-                <div class="input-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="input-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" required>
-                </div>
-                <button type="submit" id="loginButton" class="btn">
+                <div class="input-group"><label for="email">E-mail</label><input type="email" id="email" required></div>
+                <div class="input-group"><label for="password">Senha</label><input type="password" id="password" required></div>
+                <button type="submit" id="loginButton" class="btn" style="width: 100%;">
                     <span>Entrar</span>
                     <div id="loginSpinner"></div>
                 </button>
@@ -238,46 +292,24 @@
                 <input type="hidden" id="siteId">
                 <div class="input-group"><label for="siteTitle">Título do Site</label><input type="text" id="siteTitle" required></div>
                 <div class="input-group"><label for="siteUrl">URL do Site</label><input type="url" id="siteUrl" placeholder="https://exemplo.com" required></div>
-                <div class="input-group"><label for="siteImageUrl">URL da Imagem (Opcional)</label><input type="url" id="siteImageUrl" placeholder="https://link.com/imagem.png"></div>
-                <button type="submit" class="btn">Salvar</button>
+                <div class="input-group">
+                    <label for="siteImageUrl">URL da Imagem ou Classe do Ícone</label>
+                    <input type="text" id="siteImageUrl" placeholder="https://... ou fa-solid fa-rocket">
+                    <p class="help-text">Cole uma URL de imagem ou uma classe de ícone (ex: fa-solid fa-star).</p>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Salvar</button>
             </form>
         </div>
     </div>
     
-    <!-- Notificação Toast -->
     <div id="toast" class="toast"></div>
 
-    <!-- SDKs do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // #############################################################################
-            // ##  ATENÇÃO: CORREÇÃO NECESSÁRIA NO FIREBASE                              ##
-            // ##                                                                         ##
-            // ## O erro "Missing or insufficient permissions" acontece porque as        ##
-            // ## regras de segurança do Firestore não permitem a leitura pública.        ##
-            // ##                                                                         ##
-            // ## Para corrigir, vá para o seu painel do Firebase -> Firestore Database   ##
-            // ## -> Aba "Rules" e substitua as regras existentes por estas:              ##
-            // ##                                                                         ##
-            // ## rules_version = '2';                                                    ##
-            // ## service cloud.firestore {                                               ##
-            // ##   match /databases/{database}/documents {                               ##
-            // ##     match /sites/{siteId} {                                             ##
-            // ##       // Qualquer pessoa pode ler os sites.                             ##
-            // ##       allow read: if true;                                              ##
-            // ##       // Apenas usuários autenticados podem escrever.                   ##
-            // ##       allow write: if request.auth != null;                             ##
-            // ##     }                                                                   ##
-            // ##   }                                                                     ##
-            // ## }                                                                       ##
-            // ##                                                                         ##
-            // #############################################################################
-
             const firebaseConfig = {
                 apiKey: "AIzaSyBNphpVQo5JtUWJUTXPSFKmuJiLsUruTXM",
                 authDomain: "gerenciadordesites-73c9e.firebaseapp.com",
@@ -291,20 +323,13 @@
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const db = firebase.firestore();
-
             const sitesCollection = db.collection('sites');
             
-            // --- Lógica de Autenticação e Visibilidade ---
             auth.onAuthStateChanged(user => {
-                if (user) {
-                    document.body.classList.add('is-admin');
-                    closeLoginModal();
-                } else {
-                    document.body.classList.remove('is-admin');
-                }
+                document.body.classList.toggle('is-admin', !!user);
+                if (user) closeLoginModal();
             });
 
-            // --- Lógica do Dashboard (Sempre ativa) ---
             const sitesGrid = document.getElementById('sitesGrid');
             const loadingIndicator = document.getElementById('loadingIndicator');
 
@@ -321,20 +346,35 @@
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.dataset.id = doc.id;
+                    card.dataset.url = site.url;
                     
+                    const imageUrl = site.imageUrl || '';
+                    let imageContent = '';
+                    let imageStyle = '';
+
+                    if (imageUrl.startsWith('fa-')) {
+                        imageContent = `<i class="card-icon ${imageUrl}"></i>`;
+                    } else if (imageUrl.startsWith('http')) {
+                        imageStyle = `background-image: url('${imageUrl}')`;
+                    } else {
+                        imageContent = '<span class="placeholder-icon">🌐</span>';
+                    }
+
                     card.innerHTML = `
-                        <a href="${site.url}" target="_blank" rel="noopener noreferrer" class="card-link">
-                            <div class="card-image" style="background-image: url('${site.imageUrl || ''}')">
-                                ${!site.imageUrl ? '<span class="placeholder-icon">🌐</span>' : ''}
+                        <div class="card-header-link">
+                            <div class="card-image" style="${imageStyle}">
+                                ${imageContent}
                             </div>
                             <div class="card-content">
                                 <h3>${site.title}</h3>
-                                <p>${site.url}</p>
                             </div>
-                        </a>
-                        <div class="card-actions admin-only">
-                            <button class="action-btn edit-btn">Editar</button>
-                            <button class="action-btn delete-btn">Excluir</button>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn main-action-btn">
+                                <span class="not-admin-only-inline">Acessar</span>
+                                <span class="admin-only-inline">Editar</span>
+                            </button>
+                            <button class="action-btn delete-btn admin-only">Excluir</button>
                         </div>
                     `;
                     sitesGrid.appendChild(card);
@@ -344,10 +384,8 @@
                 sitesGrid.innerHTML = '<p>Ocorreu um erro ao carregar os sites. Verifique as regras de segurança do Firestore.</p>';
             });
 
-            // --- Gerenciamento de Modals ---
             const loginModal = document.getElementById('loginModal');
             const siteModal = document.getElementById('siteModal');
-
             const openLoginModal = () => loginModal.classList.add('visible');
             const closeLoginModal = () => loginModal.classList.remove('visible');
             const openSiteModal = (title, data = {}) => {
@@ -363,10 +401,8 @@
             };
             const closeSiteModal = () => siteModal.classList.remove('visible');
 
-            // Eventos para abrir/fechar modals
-            document.getElementById('login-trigger-area').addEventListener('click', openLoginModal);
+            document.getElementById('loginButtonTrigger').addEventListener('click', openLoginModal);
             document.getElementById('addSiteBtn').addEventListener('click', () => openSiteModal('Adicionar Novo Site'));
-
             loginModal.querySelector('.close-button').addEventListener('click', closeLoginModal);
             siteModal.querySelector('.close-button').addEventListener('click', closeSiteModal);
             window.addEventListener('click', (e) => {
@@ -374,31 +410,21 @@
                 if (e.target === siteModal) closeSiteModal();
             });
 
-            // --- Lógica de Formulários ---
-            
-            // Login
             document.getElementById('loginForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const loginError = document.getElementById('loginError');
+                const [email, password] = [document.getElementById('email').value, document.getElementById('password').value];
                 const loginButton = document.getElementById('loginButton');
-                
                 loginButton.disabled = true;
-                loginError.textContent = '';
-
+                document.getElementById('loginError').textContent = '';
                 auth.signInWithEmailAndPassword(email, password)
                     .catch(error => {
-                        console.error("Erro de login:", error);
-                        loginError.textContent = 'E-mail ou senha inválidos.';
+                        document.getElementById('loginError').textContent = 'E-mail ou senha inválidos.';
                     })
                     .finally(() => { loginButton.disabled = false; });
             });
 
-            // Logout
             document.getElementById('logoutButton').addEventListener('click', () => auth.signOut());
 
-            // Adicionar/Editar Site
             document.getElementById('siteForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const id = document.getElementById('siteId').value;
@@ -407,46 +433,56 @@
                     url: document.getElementById('siteUrl').value,
                     imageUrl: document.getElementById('siteImageUrl').value,
                 };
-                
-                const promise = id 
-                    ? sitesCollection.doc(id).update(siteData) // Atualizar
-                    : sitesCollection.add(siteData);          // Adicionar
-
+                const promise = id ? sitesCollection.doc(id).update(siteData) : sitesCollection.add(siteData);
                 promise.then(() => {
                     closeSiteModal();
-                    showToast(`Site ${id ? 'atualizado' : 'adicionado'} com sucesso!`);
-                }).catch(err => {
-                    console.error("Erro ao salvar:", err);
-                    showToast('Erro ao salvar o site.', 'error');
-                });
+                    showToast(`Site ${id ? 'atualizado' : 'adicionado'} com sucesso!`, 'success');
+                }).catch(err => showToast('Erro ao salvar o site.', 'error'));
             });
             
-            // --- Ações nos Cards (Editar/Excluir) ---
             sitesGrid.addEventListener('click', (e) => {
-                const target = e.target;
-                if (!document.body.classList.contains('is-admin')) return; // Só funciona se for admin
-
-                const card = target.closest('.card');
+                const card = e.target.closest('.card');
                 if (!card) return;
-                
+
                 const id = card.dataset.id;
-                
-                if (target.classList.contains('delete-btn')) {
+                const url = card.dataset.url;
+
+                const headerLink = e.target.closest('.card-header-link');
+                const mainActionBtn = e.target.closest('.main-action-btn');
+                const deleteBtn = e.target.closest('.delete-btn');
+
+                // Admin clicks on card header to open link
+                if (headerLink && auth.currentUser && url) {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                    return;
+                }
+
+                // Main action button (Acessar/Editar)
+                if (mainActionBtn) {
+                    if (auth.currentUser) {
+                        // Admin mode: Edit
+                        sitesCollection.doc(id).get().then(doc => {
+                            if (doc.exists) openSiteModal('Editar Site', { id: doc.id, ...doc.data() });
+                        });
+                    } else {
+                        // Visitor mode: Access
+                        if (url) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                    }
+                    return;
+                }
+
+                // Delete button (Admin only)
+                if (deleteBtn && auth.currentUser) {
                     if (confirm('Tem certeza que deseja excluir este site?')) {
                         sitesCollection.doc(id).delete()
-                          .then(() => showToast('Site excluído com sucesso.'))
-                          .catch(err => showToast('Erro ao excluir o site.', 'error'));
+                            .then(() => showToast('Site excluído com sucesso.', 'success'))
+                            .catch(err => showToast('Erro ao excluir o site.', 'error'));
                     }
-                } else if (target.classList.contains('edit-btn')) {
-                    sitesCollection.doc(id).get().then(doc => {
-                        if (doc.exists) {
-                            openSiteModal('Editar Site', { id: doc.id, ...doc.data() });
-                        }
-                    });
                 }
             });
 
-            // --- Função para mostrar notificações (Toast) ---
             function showToast(message, type = 'success') {
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
